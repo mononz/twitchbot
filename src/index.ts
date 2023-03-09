@@ -4,12 +4,14 @@ import { logger } from './logger';
 import { twitchClient } from './twitch-client';
 import { SpecsController } from '@app/controllers/SpecsController';
 import { CommandsController } from './controllers/CommandsController';
+import { TaskController } from './controllers/TaskController';
 
 export const messageHandlers = {
     '!fishcam': FishController.handle,
     '!riddle': RiddleController.handle,
     '!specs': SpecsController.handle,
     '!commands': CommandsController.handle,
+    '!task': TaskController.handle,
 } satisfies Record<string, (message: string, username: string) => Promise<void>>;
 
 twitchClient.connect();

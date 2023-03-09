@@ -5,8 +5,8 @@ import { twitchClient } from '@app/twitch-client';
 
 export class RiddleController {
     public static handle(message: string, username: string) {
-        const riddle = 'What is the object-oriented way to become wealthy?';
-        const answer = 'inheritance';
+        const riddle = 'What must be broken before it is useful?';
+        const answer = 'egg';
 
         // Start a new riddle
         if (RiddleController.isRiddleRequest(message)) return RiddleController.handleRiddleRequest(riddle);
