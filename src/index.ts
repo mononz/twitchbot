@@ -11,7 +11,6 @@ export const messageHandlers = {
     '!riddle': RiddleController.handle,
     '!specs': SpecsController.handle,
     '!commands': CommandsController.handle,
-    '!task': TaskController.handle,
 } satisfies Record<string, (message: string, username: string) => Promise<void>>;
 
 twitchClient.connect();
@@ -29,6 +28,9 @@ twitchClient.on('message', (_channel, state, message) => {
     const command = message.split(' ')[0] as keyof typeof messageHandlers;
 
     // If this is a command we know about, handle it
-    if (messageHandlers[command]) void messageHandlers[command](message, username);
-    else void messageHandlers['!riddle'](message, username);
+    if (messageHandlers[command]) {
+        messageHandlers[command](message, username);
+    } else {
+        TaskController.handle(message, username);
+    }
 });

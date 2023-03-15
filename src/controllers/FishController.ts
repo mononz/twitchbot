@@ -16,7 +16,7 @@ export class FishController {
         if (message.split(' ').length === 2) {
             if (message.split(' ')[0] === '!fishcam') {
                 const requestedDuration = Number(message.split(' ')[1] ?? '0') * 1_000;
-                const duration = clamp(requestedDuration, 300, 20_000);
+                const duration = clamp(requestedDuration, 1000, 30_000);
 
                 await FishController.runFishCam(duration);
             }

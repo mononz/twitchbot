@@ -4,7 +4,8 @@ import { messageHandlers } from '..';
 
 export class CommandsController {
     public static async handle() {
-        const khalidsKeys = Object.keys(messageHandlers).join(', ');
-        await twitchClient.say('#thedevdad_', `Available commands: ${khalidsKeys}`);
+        const commands = ['!task', '!project', '!embtr', '!beta', '!roadmap', '!backlog', '!discord', '!commands', '!fishcam', '!riddle', '!specs'];
+        const cleanCommandsString = commands.join(', ');
+        await twitchClient.say('#thedevdad_', `Available commands: ${cleanCommandsString}`);
     }
 }

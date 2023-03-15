@@ -5,8 +5,8 @@ import { twitchClient } from '@app/twitch-client';
 
 export class RiddleController {
     public static handle(message: string, username: string) {
-        const riddle = 'What must be broken before it is useful?';
-        const answer = 'egg';
+        const riddle = 'There is a 3-digit number. The second digit is four times as big as the third digit, while the first digit is three less than the second digit. What is the number?';
+        const answer = '141';
 
         // Start a new riddle
         if (RiddleController.isRiddleRequest(message)) return RiddleController.handleRiddleRequest(riddle);
@@ -38,7 +38,10 @@ export class RiddleController {
 
         RiddleController.changeSceneToWinner();
 
-        if (!(await RiddleController.someoneHasWon())) await RiddleController.writeUserToWinnerFile(username);
+        const someoneHasWon = await this.someoneHasWon();
+        if (someoneHasWon) {
+            await this.writeUserToWinnerFile(username);
+        }
     }
 
     public static changeSceneToWinner() {
