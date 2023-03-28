@@ -5,6 +5,10 @@ export class SceneController {
         SceneController.runCommand('touch ./scenes/primary');
     }
 
+    public static changeToDogCamScene() {
+        SceneController.runCommand('touch ./scenes/dog');
+    }
+
     public static changeToFishCamScene() {
         SceneController.runCommand('touch ./scenes/fish');
     }

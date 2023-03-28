@@ -5,14 +5,14 @@ import { twitchClient } from '@app/twitch-client';
 
 export class RiddleController {
     public static handle(message: string, username: string) {
-        const riddle = 'There is a 3-digit number. The second digit is four times as big as the third digit, while the first digit is three less than the second digit. What is the number?';
-        const answer = '141';
+        const riddle = 'What do you call a web designer who gets happy when they find a bug?';
+        const answers = ['a spider', 'spider'];
 
         // Start a new riddle
         if (RiddleController.isRiddleRequest(message)) return RiddleController.handleRiddleRequest(riddle);
 
         // User attempting to answer the riddle
-        return RiddleController.handleRiddleAnswerAttempt(username, message, answer);
+        return RiddleController.handleRiddleAnswerAttempt(username, message, answers);
     }
 
     public static isRiddleRequest(message: string) {
@@ -27,9 +27,12 @@ export class RiddleController {
         await twitchClient.say('#thedevdad_', `daily riddle: ${riddle}`);
     }
 
-    public static async handleRiddleAnswerAttempt(username: string, message: string, answer: string) {
-        if (answer.toLowerCase() === message.toLowerCase()) {
-            await RiddleController.handleCorrectAnswer(username);
+    public static async handleRiddleAnswerAttempt(username: string, message: string, answers: string[]) {
+        for (const answer of answers) {
+            if (answer.toLowerCase() === message.toLowerCase()) {
+                await RiddleController.handleCorrectAnswer(username);
+                return;
+            }
         }
     }
 
@@ -38,8 +41,8 @@ export class RiddleController {
 
         RiddleController.changeSceneToWinner();
 
-        const someoneHasWon = await this.someoneHasWon();
-        if (someoneHasWon) {
+        const isUnsolved = await this.isUnsolved();
+        if (isUnsolved) {
             await this.writeUserToWinnerFile(username);
         }
     }
@@ -51,9 +54,9 @@ export class RiddleController {
         });
     }
 
-    public static async someoneHasWon() {
+    public static async isUnsolved() {
         const text = await readFile('out/winner.txt', 'utf-8');
-        return text !== 'unsolved!';
+        return text.includes('unsolved!');
     }
 
     public static async writeUserToWinnerFile(username: string) {

@@ -1,5 +1,5 @@
 import { RiddleController } from './controllers/RiddleController';
-import { FishController } from './controllers/FishController';
+import { CameraController } from './controllers/FishController';
 import { logger } from './logger';
 import { twitchClient } from './twitch-client';
 import { SpecsController } from '@app/controllers/SpecsController';
@@ -7,7 +7,8 @@ import { CommandsController } from './controllers/CommandsController';
 import { TaskController } from './controllers/TaskController';
 
 export const messageHandlers = {
-    '!fishcam': FishController.handle,
+    '!fishcam': CameraController.handle,
+    '!dogcam': CameraController.handle,
     '!riddle': RiddleController.handle,
     '!specs': SpecsController.handle,
     '!commands': CommandsController.handle,
@@ -31,6 +32,7 @@ twitchClient.on('message', (_channel, state, message) => {
     if (messageHandlers[command]) {
         messageHandlers[command](message, username);
     } else {
+        RiddleController.handle(message, username);
         TaskController.handle(message, username);
     }
 });
