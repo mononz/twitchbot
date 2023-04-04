@@ -5,8 +5,8 @@ import { twitchClient } from '@app/twitch-client';
 
 export class RiddleController {
     public static handle(message: string, username: string) {
-        const riddle = 'What do you call a web designer who gets happy when they find a bug?';
-        const answers = ['a spider', 'spider'];
+        const riddle = 'I make a loud sound when I’m changing. When I do change, I get bigger but weigh less. What am I? ';
+        const answers = ['popcorn'];
 
         // Start a new riddle
         if (RiddleController.isRiddleRequest(message)) return RiddleController.handleRiddleRequest(riddle);

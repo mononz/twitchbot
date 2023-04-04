@@ -18,6 +18,10 @@ export class TaskController {
             this.handleBacklogCommand(message, username);
         } else if (message.toLowerCase().startsWith('!discord')) {
             this.handleDiscordCommand(message, username);
+        } else if (message.toLowerCase().startsWith('!stack')) {
+            this.handleStackCommand(message, username);
+        } else if (message.toLowerCase().startsWith('!theme')) {
+            this.handleThemeCommand(message, username);
         }
     }
 
@@ -81,6 +85,24 @@ export class TaskController {
             await writeFile('out/discord.txt', message);
         } else {
             await twitchClient.say('#thedevdad_', 'discord: ' + (await readFile('out/discord.txt', 'utf-8')));
+        }
+    }
+
+    private static async handleStackCommand(message: string, username: string) {
+        if (message.startsWith('!stack ') && username === 'thedevdad_') {
+            message = message.replace('!stack ', '');
+            await writeFile('out/stack.txt', message);
+        } else {
+            await twitchClient.say('#thedevdad_', 'stack: ' + (await readFile('out/stack.txt', 'utf-8')));
+        }
+    }
+
+    private static async handleThemeCommand(message: string, username: string) {
+        if (message.startsWith('!theme ') && username === 'thedevdad_') {
+            message = message.replace('!theme ', '');
+            await writeFile('out/theme.txt', message);
+        } else {
+            await twitchClient.say('#thedevdad_', 'theme: ' + (await readFile('out/theme.txt', 'utf-8')));
         }
     }
 }
