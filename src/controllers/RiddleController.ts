@@ -5,8 +5,8 @@ import { twitchClient } from '@app/twitch-client';
 
 export class RiddleController {
     public static handle(message: string, username: string) {
-        const riddle = 'I make a loud sound when I’m changing. When I do change, I get bigger but weigh less. What am I? ';
-        const answers = ['popcorn'];
+        const riddle = 'You can see me in water, but I never get wet. What am I? ';
+        const answers = ['reflection'];
 
         // Start a new riddle
         if (RiddleController.isRiddleRequest(message)) return RiddleController.handleRiddleRequest(riddle);
