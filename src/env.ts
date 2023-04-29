@@ -22,6 +22,7 @@ export const formatErrors = (
 export const schema = z.object({
     NODE_ENV: z.enum(['development', 'test', 'production']),
     TWITCH_USERNAME: z.string(),
+    TWITCH_CLIENT_ID: z.string(),
     TWITCH_ACCESS_TOKEN: z.string(),
     TWITCH_CHANNELS: z.array(z.string()),
 });
@@ -33,6 +34,7 @@ export const schema = z.object({
 export const serverEnv = {
     NODE_ENV: process.env.NODE_ENV,
     TWITCH_USERNAME: process.env.TWITCH_USERNAME,
+    TWITCH_CLIENT_ID: process.env.TWITCH_CLIENT_ID,
     TWITCH_ACCESS_TOKEN: process.env.TWITCH_ACCESS_TOKEN,
     TWITCH_CHANNELS: process.env.TWITCH_CHANNELS?.split(',').map((channel) => channel.trim()),
 } satisfies Record<keyof z.infer<typeof schema>, z.infer<typeof schema>[keyof z.infer<typeof schema>] | undefined>;
