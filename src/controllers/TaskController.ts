@@ -29,7 +29,6 @@ export class TaskController {
         const msg = message.toLowerCase()
         const msgSplits = message.split(' ')
 
-        const pingCommand = '!ping'
         const specsCommand = '!specs'
         const riddleCommand = '!riddle'
         const dogcamCommand = '!fishcam'
@@ -37,15 +36,11 @@ export class TaskController {
 
         commandList.push(dogcamCommand)
         commandList.push(fishcamCommand)
-        commandList.push(pingCommand)
         commandList.push(specsCommand)
         commandList.push(riddleCommand)
 
         if (msg === '!commands') {
             twitchSay(`Command List -> ${commandList.join(', ')}`);
-
-        } else if (msg === pingCommand) {
-            twitchSay('pong for you');
 
         } else if (msg === dogcamCommand) {
             await CameraController.handleDogCam(msg)
@@ -76,10 +71,10 @@ export class TaskController {
                 console.error(`Command ${msg} not found`)
             }
 
-        } else if (msg.startsWith('!') && !msg.includes(' ') && commands.includes(msg.replace('!', ''))) {
+        } else if (msg.startsWith('!') && commands.includes(msgSplits[0]?.replace('!', '') ?? '')) {
+            // pull any .txt file from the 'out' directory matching the name
             // i.e. !project
-            // pull any .txt file from the out directory matching the name
-            const fileName = msg.replace('!', '')
+            const fileName = msgSplits[0]?.replace('!', '') ?? ''
             try {
                 const fileContents = await readFile(`out/${fileName}.txt`, 'utf-8')
                 twitchSay(fileContents);
