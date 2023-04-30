@@ -30,7 +30,6 @@
     "outdent": "0.8.0",
     "systeminformation": "5.17.12",
     "tesjs": "1.0.1",
-    "tmi.js": "1.8.5",
     "zod": "3.21.4"
   },
   "devDependencies": {
