@@ -1,6 +1,7 @@
 import { logger } from './logger'
-import { twitchChatClient, twitchPubSubClient, twitchSay, getTwitchUserId } from './twitch-client'
+import { twitchChatClient, twitchPubSubClient, getTwitchUserId } from './twitch-client'
 import { TaskController } from './controllers/TaskController'
+import { ChannelPointsController } from './controllers/ChannelPointsController'
 import { PubSubBitsMessage, PubSubRedemptionMessage, PubSubSubscriptionMessage } from '@twurple/pubsub';
 import { env } from '@app/env';
 
@@ -29,7 +30,7 @@ async function startTwitch() {
     })
 
     twitchPubSubClient.onRedemption(twitchUserId, (message: PubSubRedemptionMessage) => {
-        handleTwitchRedeem(channel, message) // .catch(e => console.error(e))
+        handleTwitchRedeem(channel, message).catch(e => console.error(e))
     })
 
     console.log('Twitch PubSub client connected')
@@ -45,9 +46,11 @@ async function handleTwitchMessage(channel: string, user: string, message: strin
     await TaskController.handle(message, user)
 }
 
-function handleTwitchRedeem(channel: string, message: PubSubRedemptionMessage) {
-    console.log('Redeemed:', message.rewardTitle)
-    twitchSay(`@${message.userName ?? '?'} redeemed ${message.rewardTitle ?? '?'}`)
+async function handleTwitchRedeem(channel: string, message: PubSubRedemptionMessage) {
+    if (message.rewardTitle) {
+        console.log('Redeem:', `${message.userName ?? '?'} is redeeming ${message.rewardTitle}`)
+        await ChannelPointsController.handle(message.rewardTitle)
+    }
 }
 
 console.log('twitch bot starting')
