@@ -4,7 +4,7 @@ import { env } from '@app/env';
 import * as path from 'path';
 import { SpecsController } from '@app/controllers/SpecsController';
 import { RiddleController } from '@app/controllers/RiddleController';
-import { CameraController } from '@app/controllers/FishController';
+import { CameraController } from '@app/controllers/CameraController';
 
 export class TaskController {
 
