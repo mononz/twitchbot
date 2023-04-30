@@ -1,108 +1,94 @@
-import { twitchClient } from '@app/twitch-client';
-import { readFile, writeFile } from 'fs/promises';
+import { twitchSay } from '@app/twitch-client';
+import { readFile, writeFile, readdir } from 'fs/promises';
+import { env } from '@app/env';
+import * as path from 'path';
+import { SpecsController } from '@app/controllers/SpecsController';
+import { RiddleController } from '@app/controllers/RiddleController';
+import { CameraController } from '@app/controllers/FishController';
 
 export class TaskController {
+
     public static async handle(message: string, username: string) {
         //if message starts with !task
-        if (message.toLowerCase().startsWith('!task')) {
-            this.handleTaskCommand(message, username);
-        } else if (message.toLowerCase().startsWith('!project')) {
-            this.handleProjectCommand(message, username);
-        } else if (message.toLowerCase().startsWith('!embtr')) {
-            this.handleEmbtrCommand(message, username);
-        } else if (message.toLowerCase().startsWith('!beta')) {
-            this.handleBetaCommand(message, username);
-        } else if (message.toLowerCase().startsWith('!roadmap')) {
-            this.handleRoadmapCommand(message, username);
-        } else if (message.toLowerCase().startsWith('!backlog')) {
-            this.handleBacklogCommand(message, username);
-        } else if (message.toLowerCase().startsWith('!discord')) {
-            this.handleDiscordCommand(message, username);
-        } else if (message.toLowerCase().startsWith('!stack')) {
-            this.handleStackCommand(message, username);
-        } else if (message.toLowerCase().startsWith('!theme')) {
-            this.handleThemeCommand(message, username);
-        }
-    }
+        const isModerator = username === env.TWITCH_USERNAME
 
-    private static async handleTaskCommand(message: string, username: string) {
-        if (message.startsWith('!task ') && username === 'thedevdad_') {
-            message = message.replace('!task ', '');
-            await writeFile('out/currenttask.txt', message);
-        } else {
-            await twitchClient.say('#thedevdad_', 'current task: ' + (await readFile('out/currenttask.txt', 'utf-8')));
-        }
-    }
+        const commands: string [] = []
+        const commandList: string [] = []
 
-    private static async handleProjectCommand(message: string, username: string) {
-        if (message.startsWith('!project ') && username === 'thedevdad_') {
-            message = message.replace('!project ', '');
-            await writeFile('out/currentproject.txt', message);
-        } else {
-            await twitchClient.say('#thedevdad_', 'project: ' + (await readFile('out/currentproject.txt', 'utf-8')));
-        }
-    }
+        const files = await readdir('out')
+        files
+            .filter(file => {
+                return path.extname(file) == '.txt'
+            })
+            .forEach( file => {
+                const name = file.replace('.txt', '')
+                commands.push(name)
+                commandList.push(`!${name}`)
+            })
 
-    private static async handleEmbtrCommand(message: string, username: string) {
-        if (message.startsWith('!embtr ') && username === 'thedevdad_') {
-            message = message.replace('!beta ', '');
-            await writeFile('out/beta.txt', message);
-        } else {
-            await twitchClient.say('#thedevdad_', await readFile('out/beta.txt', 'utf-8'));
-        }
-    }
+        const msg = message.toLowerCase()
+        const msgSplits = message.split(' ')
 
-    private static async handleBetaCommand(message: string, username: string) {
-        if (message.startsWith('!beta ') && username === 'thedevdad_') {
-            message = message.replace('!beta ', '');
-            await writeFile('out/beta.txt', message);
-        } else {
-            await twitchClient.say('#thedevdad_', 'beta: ' + (await readFile('out/beta.txt', 'utf-8')));
-        }
-    }
+        const pingCommand = '!ping'
+        const specsCommand = '!specs'
+        const riddleCommand = '!riddle'
+        const dogcamCommand = '!fishcam'
+        const fishcamCommand = '!dogcam'
 
-    private static async handleRoadmapCommand(message: string, username: string) {
-        if (message.startsWith('!roadmap ') && username === 'thedevdad_') {
-            message = message.replace('!roadmap ', '');
-            await writeFile('out/roadmap.txt', message);
-        } else {
-            await twitchClient.say('#thedevdad_', 'roadmap: ' + (await readFile('out/roadmap.txt', 'utf-8')));
-        }
-    }
+        commandList.push(dogcamCommand)
+        commandList.push(fishcamCommand)
+        commandList.push(pingCommand)
+        commandList.push(specsCommand)
+        commandList.push(riddleCommand)
 
-    private static async handleBacklogCommand(message: string, username: string) {
-        if (message.startsWith('!backlog ') && username === 'thedevdad_') {
-            message = message.replace('!backlog ', '');
-            await writeFile('out/backlog.txt', message);
-        } else {
-            await twitchClient.say('#thedevdad_', 'backlog: ' + (await readFile('out/backlog.txt', 'utf-8')));
-        }
-    }
+        if (msg === '!commands') {
+            twitchSay(`Command List -> ${commandList.join(', ')}`);
 
-    private static async handleDiscordCommand(message: string, username: string) {
-        if (message.startsWith('!discord ') && username === 'thedevdad_') {
-            message = message.replace('!discord ', '');
-            await writeFile('out/discord.txt', message);
-        } else {
-            await twitchClient.say('#thedevdad_', 'discord: ' + (await readFile('out/discord.txt', 'utf-8')));
-        }
-    }
+        } else if (msg === pingCommand) {
+            twitchSay('pong for you');
 
-    private static async handleStackCommand(message: string, username: string) {
-        if (message.startsWith('!stack ') && username === 'thedevdad_') {
-            message = message.replace('!stack ', '');
-            await writeFile('out/stack.txt', message);
-        } else {
-            await twitchClient.say('#thedevdad_', 'stack: ' + (await readFile('out/stack.txt', 'utf-8')));
-        }
-    }
+        } else if (msg === dogcamCommand) {
+            await CameraController.handleDogCam(msg)
 
-    private static async handleThemeCommand(message: string, username: string) {
-        if (message.startsWith('!theme ') && username === 'thedevdad_') {
-            message = message.replace('!theme ', '');
-            await writeFile('out/theme.txt', message);
-        } else {
-            await twitchClient.say('#thedevdad_', 'theme: ' + (await readFile('out/theme.txt', 'utf-8')));
+        } else if (msg === fishcamCommand) {
+            await CameraController.handleFishCam(msg)
+
+        } else if (msg === riddleCommand) {
+            RiddleController.handleRiddleRequest()
+
+        } else if (msg.startsWith(riddleCommand + ' ')) {
+            const answer = msg.substring(riddleCommand.length + 1, msg.length)
+            console.log(answer)
+            await RiddleController.handleRiddleAnswerAttempt(username, answer)
+
+        } else if (msg === specsCommand) {
+            const specs = await SpecsController.generateSpecsResponse()
+            twitchSay(specs);
+
+        } else if (isModerator && msgSplits.length >= 3 && msgSplits[0] === '!add' && msgSplits[1]?.startsWith('!')) {
+            // i.e. !add !hacker some text
+            try {
+                const fileName = msgSplits[1].replace('!', '')
+                const fileContents = msgSplits.splice(2, msgSplits.length).join(' ')
+                await writeFile(`out/${fileName}.txt`, fileContents);
+                twitchSay(`Created the command !${fileName}`);
+            } catch (e) {
+                console.error(`Command ${msg} not found`)
+            }
+
+        } else if (msg.startsWith('!') && !msg.includes(' ') && commands.includes(msg.replace('!', ''))) {
+            // i.e. !project
+            // pull any .txt file from the out directory matching the name
+            const fileName = msg.replace('!', '')
+            try {
+                const fileContents = await readFile(`out/${fileName}.txt`, 'utf-8')
+                twitchSay(fileContents);
+            } catch (e) {
+                console.error(`Unexpected error opening ${fileName}`)
+            }
+
+        } else if (msg.startsWith('!')) {
+            twitchSay('I don\'t know this command');
         }
     }
 }

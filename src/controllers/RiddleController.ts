@@ -1,43 +1,35 @@
 import { readFile, writeFile } from 'fs/promises';
 import { SceneController } from '@app/controllers/SceneController';
 import { setTimeout } from 'timers/promises';
-import { twitchClient } from '@app/twitch-client';
+import { twitchSay } from '@app/twitch-client';
+
+const riddle = 'You can see me in water, but I never get wet. What am I?';
+const answers = ['reflection'];
 
 export class RiddleController {
-    public static handle(message: string, username: string) {
-        const riddle = 'You can see me in water, but I never get wet. What am I? ';
-        const answers = ['reflection'];
 
-        // Start a new riddle
-        if (RiddleController.isRiddleRequest(message)) return RiddleController.handleRiddleRequest(riddle);
-
-        // User attempting to answer the riddle
-        return RiddleController.handleRiddleAnswerAttempt(username, message, answers);
+    public static handleRiddleRequest() {
+        twitchSay(`daily riddle: ${riddle} (Type your answer as '!riddle answer')`);
     }
 
-    public static isRiddleRequest(message: string) {
-        return message.toLowerCase() === '!riddle';
-    }
+    public static async handleRiddleAnswerAttempt(username: string, message: string) {
 
-    public static isRiddleAnswerAttempt(message: string) {
-        return message.toLowerCase().startsWith('!riddle ');
-    }
-
-    public static async handleRiddleRequest(riddle: string) {
-        await twitchClient.say('#thedevdad_', `daily riddle: ${riddle}`);
-    }
-
-    public static async handleRiddleAnswerAttempt(username: string, message: string, answers: string[]) {
         for (const answer of answers) {
             if (answer.toLowerCase() === message.toLowerCase()) {
-                await RiddleController.handleCorrectAnswer(username);
+                const isUnsolved = await this.isUnsolved()
+                if (isUnsolved) {
+                    await RiddleController.handleCorrectAnswer(username);
+                } else {
+                    const winner = await this.riddleWinner()
+                    twitchSay(`Correct @${username}! However ${winner} bet you to it!`);
+                }
                 return;
             }
         }
     }
 
     public static async handleCorrectAnswer(username: string) {
-        await twitchClient.say('#thedevdad_', `${username}, you got the riddle correct!`);
+        twitchSay(`${username}, you got the riddle correct!`);
 
         RiddleController.changeSceneToWinner();
 
@@ -57,6 +49,10 @@ export class RiddleController {
     public static async isUnsolved() {
         const text = await readFile('out/winner.txt', 'utf-8');
         return text.includes('unsolved!');
+    }
+
+    public static async riddleWinner() {
+        return await readFile('out/winner.txt', 'utf-8');
     }
 
     public static async writeUserToWinnerFile(username: string) {

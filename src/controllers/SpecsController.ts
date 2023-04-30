@@ -1,20 +1,15 @@
 import os from 'os';
-import { twitchClient } from '@app/twitch-client';
 import { outdent } from 'outdent';
 import systeminformation from 'systeminformation';
 
 export class SpecsController {
     private static cache: string | null = null;
 
-    public static async handle() {
-        await twitchClient.say('#thedevdad_', await SpecsController.generateSpecsResponse());
-    }
-
     public static async generateSpecsResponse() {
         if (!SpecsController.cache) SpecsController.cache = outdent`
-            CPU: ${SpecsController.getCpu()}
-            GPU: ${await SpecsController.getGpu()}
-            RAM: ${SpecsController.getRam()}
+            CPU: ${SpecsController.getCpu()}, 
+            GPU: ${await SpecsController.getGpu()}, 
+            RAM: ${SpecsController.getRam()}, 
             Storage: ${await SpecsController.getStorage()}
         `;
 

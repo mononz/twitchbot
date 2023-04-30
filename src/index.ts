@@ -1,38 +1,53 @@
-import { RiddleController } from './controllers/RiddleController';
-import { CameraController } from './controllers/FishController';
-import { logger } from './logger';
-import { twitchClient } from './twitch-client';
-import { SpecsController } from '@app/controllers/SpecsController';
-import { CommandsController } from './controllers/CommandsController';
-import { TaskController } from './controllers/TaskController';
+import { logger } from './logger'
+import { twitchChatClient, twitchPubSubClient, twitchSay, getTwitchUserId } from './twitch-client'
+import { TaskController } from './controllers/TaskController'
+import { PubSubBitsMessage, PubSubRedemptionMessage, PubSubSubscriptionMessage } from '@twurple/pubsub';
+import { env } from '@app/env';
 
-export const messageHandlers = {
-    '!fishcam': CameraController.handle,
-    '!dogcam': CameraController.handle,
-    '!riddle': RiddleController.handle,
-    '!specs': SpecsController.handle,
-    '!commands': CommandsController.handle,
-} satisfies Record<string, (message: string, username: string) => Promise<void>>;
+startTwitch().catch(e => console.error(e))
 
-twitchClient.connect();
+async function startTwitch() {
 
-twitchClient.on('message', (_channel, state, message) => {
-    const username = state['display-name'];
+    const username = env.TWITCH_USERNAME
+    const twitchUserId = await getTwitchUserId(username)
+    const channel = `#${username}`
+
+    twitchChatClient.connect()
+        .then(() => console.log(`Twitch clients connected for - ${twitchUserId}`))
+        .catch(e => console.error(e))
+
+    twitchChatClient.onMessage((channel: string, user: string, message: string) => {
+        handleTwitchMessage(channel, user, message).catch(e => console.error(e))
+    })
+
+    twitchPubSubClient.onSubscription(twitchUserId, (message: PubSubSubscriptionMessage) => {
+        console.log(message)
+    })
+
+    twitchPubSubClient.onBits(twitchUserId, (message: PubSubBitsMessage) => {
+        console.log(message)
+    })
+
+    twitchPubSubClient.onRedemption(twitchUserId, (message: PubSubRedemptionMessage) => {
+        handleTwitchRedeem(channel, message) // .catch(e => console.error(e))
+    })
+
+    console.log('Twitch PubSub client connected')
+}
+
+async function handleTwitchMessage(channel: string, user: string, message: string) {
+    // Log the message and who sent it
+    logger.log(user, message)
 
     // Ignore messages from the bot
-    if (!username || username === 'thedevdadbot') return;
+    if (user === 'thedevdadbot') return  // todo, ignore bot messages
 
-    // Log the message and who sent it
-    logger.log(username, message);
+    await TaskController.handle(message, user)
+}
 
-    // Get the command from the message
-    const command = message.split(' ')[0] as keyof typeof messageHandlers;
+function handleTwitchRedeem(channel: string, message: PubSubRedemptionMessage) {
+    console.log('Redeemed:', message.rewardTitle)
+    twitchSay(`@${message.userName ?? '?'} redeemed ${message.rewardTitle ?? '?'}`)
+}
 
-    // If this is a command we know about, handle it
-    if (messageHandlers[command]) {
-        messageHandlers[command](message, username);
-    } else {
-        RiddleController.handle(message, username);
-        TaskController.handle(message, username);
-    }
-});
+console.log('twitch bot starting')

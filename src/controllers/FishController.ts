@@ -3,20 +3,9 @@ import { setTimeout } from 'timers/promises';
 import { SceneController } from '@app/controllers/SceneController';
 
 export class CameraController {
-    /**
-     * Handles the fish cam command
-     * @param message the message to handle
-     */
-    public static async handle(message: string) {
-        if (message.toLocaleLowerCase().includes('!dogcam')) {
-            await CameraController.handleDogCam(message);
-        } else if (message.toLocaleLowerCase().includes('!fishcam')) {
-            await CameraController.handleFishCam(message);
-        }
-    }
 
-    private static async handleDogCam(message: string) {
-        if (message.toLocaleLowerCase() === '!dogcam') {
+    public static async handleDogCam(message: string) {
+        if (message.toLocaleLowerCase().includes('!dogcam')) {
             await CameraController.runDogCam(10_000);
             return;
         }
@@ -31,8 +20,8 @@ export class CameraController {
         }
     }
 
-    private static async handleFishCam(message: string) {
-        if (message.toLocaleLowerCase() === '!fishcam') {
+    public static async handleFishCam(message: string) {
+        if (message.toLocaleLowerCase().includes('!fishcam')) {
             await CameraController.runFishCam(10_000);
             return;
         }
