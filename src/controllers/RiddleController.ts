@@ -8,10 +8,6 @@ const answers = ['reflection'];
 
 export class RiddleController {
 
-    public static isRiddleRequest(message: string) {
-        return message.toLowerCase() === '!riddle';
-    }
-
     public static handleRiddleRequest() {
         twitchSay(`daily riddle: ${riddle} (Type your answer as '!riddle answer')`);
     }
