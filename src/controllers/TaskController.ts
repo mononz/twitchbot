@@ -54,7 +54,12 @@ export class TaskController {
             await CameraController.handleFishCam(msg)
 
         } else if (msg === riddleCommand) {
-            await RiddleController.handle(msg, username)
+            RiddleController.handleRiddleRequest()
+
+        } else if (msg.startsWith(riddleCommand + ' ')) {
+            const answer = msg.substring(riddleCommand.length + 1, msg.length)
+            console.log(answer)
+            await RiddleController.handleRiddleAnswerAttempt(username, answer)
 
         } else if (msg === specsCommand) {
             const specs = await SpecsController.generateSpecsResponse()
