@@ -1,11 +1,22 @@
 import { logger } from './logger'
 import { twitchChatClient, twitchPubSubClient, getTwitchUserId } from './twitch-client'
+import { getLightInfo, lights } from './hue-client'
 import { TaskController } from './controllers/TaskController'
 import { ChannelPointsController } from './controllers/ChannelPointsController'
 import { PubSubBitsMessage, PubSubRedemptionMessage, PubSubSubscriptionMessage } from '@twurple/pubsub';
 import { env } from '@app/env';
 
 startTwitch().catch(e => console.error(e))
+
+async function listLightInfo() {
+    await Promise.all([
+        getLightInfo(lights.hueGo),
+        getLightInfo(lights.huePlayLeft),
+        getLightInfo(lights.huePlayRight),
+    ])
+}
+
+listLightInfo().catch(e => console.error(e))
 
 async function startTwitch() {
 
