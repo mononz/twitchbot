@@ -49,7 +49,7 @@ async function handleTwitchMessage(channel: string, user: string, message: strin
 async function handleTwitchRedeem(channel: string, message: PubSubRedemptionMessage) {
     if (message.rewardTitle) {
         console.log('Redeem:', `${message.userName ?? '?'} is redeeming ${message.rewardTitle}`)
-        await ChannelPointsController.handle(message.rewardTitle)
+        await ChannelPointsController.handle(message.rewardTitle, message.message)
     }
 }
 
