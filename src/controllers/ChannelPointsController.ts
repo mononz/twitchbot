@@ -1,5 +1,6 @@
 import { lights, setLightColor } from './../hue-client'
 import { CameraController } from '@app/controllers/CameraController';
+import { delay } from '@d-fischer/shared-utils';
 
 export class ChannelPointsController {
 
@@ -35,6 +36,10 @@ export class ChannelPointsController {
                     // setLightColor(lights.huePlayRight, hex)
                 ])
             }
+        } else if (title === 'lights - police') {
+            await lightsPolice()
+        } else if (title === 'lights - rgb') {
+            await lightsRGB()
         } else if (title.startsWith('lights - ')) {
             const color = title.split(' - ')[1] ?? '?'
             const hex = colorToHex(color)
@@ -47,6 +52,47 @@ export class ChannelPointsController {
             }
         }
     }
+}
+
+async function lightsPolice() {
+    const red = '#FF0000'
+    const blue = '#0000FF'
+    const animation: string[] = [
+        red, blue,
+        red, blue,
+        red, blue,
+        red, blue,
+        red, blue
+    ]
+    await runLightAnimation(animation)
+    await resetLights()
+}
+
+async function lightsRGB() {
+    const red = '#FF0000'
+    const green = '#00FF00'
+    const blue = '#0000FF'
+    const animation: string[] = [
+        red, blue, green,
+        red, blue, green,
+        red, blue, green
+    ]
+    await runLightAnimation(animation, 100)
+    await resetLights()
+}
+
+async function runLightAnimation(animation: string[], delayMs: number | null = null) {
+    for (const color of animation) {
+        await setLightColor(lights.hueGo, color)
+        if (delayMs) {
+            await delay(delayMs)
+        }
+    }
+}
+
+async function resetLights() {
+    const color = '#008080'
+    await setLightColor(lights.hueGo, color)
 }
 
 function colorToHex(color: string): string | null {
