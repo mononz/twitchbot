@@ -8,16 +8,6 @@ import { env } from '@app/env';
 
 startTwitch().catch(e => console.error(e))
 
-async function listLightInfo() {
-    await Promise.all([
-        getLightInfo(lights.hueGo),
-        getLightInfo(lights.huePlayLeft),
-        getLightInfo(lights.huePlayRight),
-    ])
-}
-
-listLightInfo().catch(e => console.error(e))
-
 async function startTwitch() {
 
     const username = env.TWITCH_USERNAME
@@ -45,6 +35,8 @@ async function startTwitch() {
     })
 
     console.log('Twitch PubSub client connected')
+
+    await getLightInfo()
 }
 
 async function handleTwitchMessage(channel: string, user: string, message: string) {

@@ -27,12 +27,18 @@ export async function setLightColor(lightId: number, hex: string): Promise<void>
     console.log(`Light ${lightId} color set successfully.`);
 }
 
-export async function getLightInfo(lightId: number): Promise<void> {
+export async function getLightInfo(): Promise<void> {
 
     const api = await getHueApi();
-    const light= await api.lights.getLightState(lightId)
 
-    console.log(`Light ${lightId}: `, light);
+    const hueGo= await api.lights.getLightState(lights.hueGo)
+    console.log('Light hueGo: ', hueGo);
+
+    const huePlayLeft= await api.lights.getLightState(lights.huePlayLeft)
+    console.log('Light huePlayLeft: ', huePlayLeft);
+
+    const huePlayRight= await api.lights.getLightState(lights.huePlayRight)
+    console.log('Light huePlayRight: ', huePlayRight);
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {

@@ -43,7 +43,7 @@ function colorToHex(color: string): string | null {
         case 'blue':
             return '#0000FF'
         case 'teal':
-            return '#00FFFF'
+            return '#008080'
         case 'pink':
             return '#FF00FF'
         case 'white':
