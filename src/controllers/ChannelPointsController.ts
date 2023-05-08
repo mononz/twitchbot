@@ -12,22 +12,37 @@ export class ChannelPointsController {
         } else if (title === 'fishcam') {
             await CameraController.handleFishCam('!fishcam')
 
-        } else if (title.startsWith('lights - ')) {
-            const color = title.split(' - ')[1] ?? '?'
+        } else if (title === 'lights - color') {
+            const hex = colorToHex(message)
+            if (hex) {
+                await Promise.all([
+                    setLightColor(lights.hueGo, hex),
+                    // setLightColor(lights.huePlayLeft, hex),
+                    // setLightColor(lights.huePlayRight, hex)
+                ])
+            }
+        } else if (title === 'lights - hex') {
             let hex: string | null = null
-            if (color === 'custom' && message.startsWith('#') && message.length === 7) {
+            if (message.startsWith('#') && message.length === 7) {
                 hex = message
-            } else if (color === 'custom') {
-                console.log(rewardTitle + ': ' + message)
-                hex = colorToHex(message)
-            } else if (color !== '?') {
-                hex = colorToHex(color)
+            } else {
+                console.error(`Bad hex: ${message}`)
             }
             if (hex) {
                 await Promise.all([
                     setLightColor(lights.hueGo, hex),
-                    setLightColor(lights.huePlayLeft, hex),
-                    setLightColor(lights.huePlayRight, hex)
+                    // setLightColor(lights.huePlayLeft, hex),
+                    // setLightColor(lights.huePlayRight, hex)
+                ])
+            }
+        } else if (title.startsWith('lights - ')) {
+            const color = title.split(' - ')[1] ?? '?'
+            const hex = colorToHex(color)
+            if (hex) {
+                await Promise.all([
+                    setLightColor(lights.hueGo, hex),
+                    // setLightColor(lights.huePlayLeft, hex),
+                    // setLightColor(lights.huePlayRight, hex)
                 ])
             }
         }
