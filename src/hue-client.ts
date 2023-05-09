@@ -20,7 +20,7 @@ export async function setLightColor(lightId: number, hex: string): Promise<void>
         .on(true)
         .rgb(rgb.r, rgb.g, rgb.b)
         .transitionFast()
-        .brightness(100)
+        .brightness(hex === '#000000' ? 0 : 100)
 
     const api = await getHueApi();
     await api.lights.setLightState(lightId, lightState)

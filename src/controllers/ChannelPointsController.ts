@@ -53,6 +53,12 @@ export class ChannelPointsController {
         } else if (redeem === 'Fishcam') {
             await CameraController.handleFishCam('!fishcam')
 
+        } else if (redeem === 'bits') {
+            lightsPolice()
+
+        } else if (redeem === 'subscription') {
+            lightsPolice()
+
         } else if (redeem === 'Lights - Color') {
             const hex = colorToHex(message)
             queueItUp('Color', hex)
@@ -66,7 +72,9 @@ export class ChannelPointsController {
             lightsPolice()
         } else if (redeem === 'Lights - RGB') {
             lightsRGB()
-        } else if (redeem.startsWith('Lights - ')) {
+        } else if (redeem === 'Lights - Flash') {
+            lightsFlash()
+        }  else if (redeem.startsWith('Lights - ')) {
             const color = redeem.split(' - ')[1] ?? '?'
             const hex = colorToHex(color)
             queueItUp(color, hex)
@@ -110,6 +118,22 @@ function lightsRGB() {
         colors.red, colors.green, colors.blue,
         colors.red, colors.green, colors.blue,
         colors.red, colors.green, colors.blue,
+        currentColor  // go back to the previous color set
+    ]
+    queue.enqueue(async () => {
+        console.log('Job started - RGB')
+        await runLightAnimation(animation, delay)
+    })
+}
+
+function lightsFlash() {
+    const delay = 500
+    const black = '#000000' // black turns off light
+    const animation: (string | undefined)[] = [
+        black, colors.white,
+        black, colors.white,
+        black, colors.white,
+        black, colors.white,
         currentColor  // go back to the previous color set
     ]
     queue.enqueue(async () => {
