@@ -2,6 +2,17 @@ import { lights, setLightColor } from './../hue-client'
 import { CameraController } from '@app/controllers/CameraController'
 import { delay } from '@d-fischer/shared-utils'
 
+const colors: Record<string, string> = {
+    red: '#FF0000',
+    green: '#00FF00',
+    blue: '#0000FF',
+    teal: '#008080',
+    pink: '#FF00FF',
+    white: '#FFFFFF',
+    orange: '#FF7F50',
+    yellow: '#DFFF00',
+}
+
 class JobQueue {
     private queue: (() => Promise<void>)[] = [];
     private isProcessing = false;
@@ -9,7 +20,7 @@ class JobQueue {
     enqueue(job: () => Promise<void>) {
         this.queue.push(job);
         if (!this.isProcessing) {
-            this.processQueue();
+            this.processQueue().catch(e => console.error(e))
         }
     }
 
@@ -19,25 +30,18 @@ class JobQueue {
             const job = this.queue.shift();
             if (job) {
                 await job();
-                await this.wait(10000);
+                // await wait(10000);
             }
         }
         this.isProcessing = false;
     }
+}
 
-    private wait(ms: number) {
-        return new Promise(resolve => setTimeout(resolve, ms));
-    }
+function waitSec(sec: number) {
+    return new Promise(resolve => setTimeout(resolve, sec * 1000));
 }
 
 const queue = new JobQueue()
-
-// Utility function for delaying execution
-function sleep(milliseconds: number): Promise<void> {
-    return new Promise<void>((resolve) => {
-        setTimeout(resolve, milliseconds)
-    });
-}
 
 export class ChannelPointsController {
 
@@ -51,69 +55,67 @@ export class ChannelPointsController {
 
         } else if (redeem === 'Lights - Color') {
             const hex = colorToHex(message)
-            if (hex) {
-                queue.enqueue(async () => {
-                    console.log(`Job started - ${hex}`);
-                    setLightColor(lights.hueGo, hex).catch(e => console.error(e))
-                    await sleep(10000) // 10 sec
-                    console.log('Job completed - ${hex}');
-                });
-            }
+            queueItUp('Color', hex)
         } else if (redeem === 'Lights - Hex') {
-            let hex: string | null = null
             if (message.startsWith('#') && message.length === 7) {
-                hex = message
+                queueItUp('Hex', message)
             } else {
                 console.error(`Bad hex: ${message}`)
             }
-            if (hex) {
-                await Promise.all([
-                    setLightColor(lights.hueGo, hex),
-                    // setLightColor(lights.huePlayLeft, hex),
-                    // setLightColor(lights.huePlayRight, hex)
-                ])
-            }
         } else if (redeem === 'Lights - Police') {
-            await lightsPolice()
+            lightsPolice()
         } else if (redeem === 'Lights - RGB') {
-            await lightsRGB()
+            lightsRGB()
         } else if (redeem.startsWith('Lights - ')) {
             const color = redeem.split(' - ')[1] ?? '?'
             const hex = colorToHex(color)
-            if (hex) {
-                queue.enqueue(async () => {
-                    console.log(`Job started - ${color}`)
-                    await setLightColor(lights.hueGo, hex)
-                    // await sleep(10000)  // 10 sec
-                    console.log(`Job completed - ${color}`)
-                })
-            }
+            queueItUp(color, hex)
         }
     }
 }
 
-async function lightsPolice() {
-    const delay = 500
-    const animation: (string | undefined)[] = [
-        colors.red, colors.blue,
-        colors.red, colors.blue,
-        colors.red, colors.blue,
-        colors.red, colors.blue,
-        colors.red, colors.blue
-    ]
-    await runLightAnimation(animation, delay)
-    await resetLights()
+const minimumLightDurationSecs = 10
+let currentColor = colors.teal
+
+function queueItUp(name: string, hex: string | null) {
+    if (hex) {
+        queue.enqueue(async () => {
+            console.log(`Job started - ${name}`)
+            currentColor = hex
+            await setLightColor(lights.hueGo, hex)
+            await waitSec(minimumLightDurationSecs);
+        })
+    }
 }
 
-async function lightsRGB() {
+function lightsPolice() {
+    const delay = 500
+    const animation: (string | undefined)[] = [
+        colors.red, colors.blue,
+        colors.red, colors.blue,
+        colors.red, colors.blue,
+        colors.red, colors.blue,
+        colors.red, colors.blue,
+        currentColor  // go back to the previous color set
+    ]
+    queue.enqueue(async () => {
+        console.log('Job started - Police')
+        await runLightAnimation(animation, delay)
+    });
+}
+
+function lightsRGB() {
     const delay = 500
     const animation: (string | undefined)[] = [
         colors.red, colors.green, colors.blue,
         colors.red, colors.green, colors.blue,
         colors.red, colors.green, colors.blue,
+        currentColor  // go back to the previous color set
     ]
-    await runLightAnimation(animation, delay)
-    await resetLights()
+    queue.enqueue(async () => {
+        console.log('Job started - RGB')
+        await runLightAnimation(animation, delay)
+    })
 }
 
 async function runLightAnimation(animation: (string | undefined)[], delayMs: number | null = null) {
@@ -125,22 +127,6 @@ async function runLightAnimation(animation: (string | undefined)[], delayMs: num
             await delay(delayMs)
         }
     }
-}
-
-async function resetLights() {
-    const color = '#008080'
-    await setLightColor(lights.hueGo, color)
-}
-
-const colors: Record<string, string> = {
-    red: '#FF0000',
-    green: '#00FF00',
-    blue: '#0000FF',
-    teal: '#008080',
-    pink: '#FF00FF',
-    white: '#FFFFFF',
-    orange: '#FF7F50',
-    yellow: '#DFFF00',
 }
 
 function colorToHex(color: string): string | null {
