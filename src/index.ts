@@ -23,15 +23,15 @@ async function startTwitch() {
     })
 
     twitchPubSubClient.onSubscription(twitchUserId, (message: PubSubSubscriptionMessage) => {
-        console.log(message)
+        handleSubscription().catch(e => console.error(e))
     })
 
     twitchPubSubClient.onBits(twitchUserId, (message: PubSubBitsMessage) => {
-        console.log(message)
+        handleBitsRedeem().catch(e => console.error(e))
     })
 
     twitchPubSubClient.onRedemption(twitchUserId, (message: PubSubRedemptionMessage) => {
-        handleTwitchRedeem(channel, message).catch(e => console.error(e))
+        handleTwitchRedeem(message).catch(e => console.error(e))
     })
 
     console.log('Twitch PubSub client connected')
@@ -49,11 +49,19 @@ async function handleTwitchMessage(channel: string, user: string, message: strin
     await TaskController.handle(message, user)
 }
 
-async function handleTwitchRedeem(channel: string, message: PubSubRedemptionMessage) {
+async function handleTwitchRedeem(message: PubSubRedemptionMessage) {
     if (message.rewardTitle) {
         console.log('Redeem:', `${message.userName ?? '?'} is redeeming ${message.rewardTitle}`)
         await ChannelPointsController.handle(message.rewardTitle, message.message)
     }
+}
+
+async function handleBitsRedeem() {
+    await ChannelPointsController.handle('bits', '')
+}
+
+async function handleSubscription() {
+    await ChannelPointsController.handle('subscription', '')
 }
 
 console.log('twitch bot starting')
