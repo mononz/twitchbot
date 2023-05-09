@@ -1,6 +1,42 @@
 import { lights, setLightColor } from './../hue-client'
-import { CameraController } from '@app/controllers/CameraController';
-import { delay } from '@d-fischer/shared-utils';
+import { CameraController } from '@app/controllers/CameraController'
+import { delay } from '@d-fischer/shared-utils'
+
+class JobQueue {
+    private queue: (() => Promise<void>)[] = [];
+    private isProcessing = false;
+
+    enqueue(job: () => Promise<void>) {
+        this.queue.push(job);
+        if (!this.isProcessing) {
+            this.processQueue();
+        }
+    }
+
+    private async processQueue() {
+        this.isProcessing = true;
+        while (this.queue.length > 0) {
+            const job = this.queue.shift();
+            if (job) {
+                await job();
+            }
+        }
+        this.isProcessing = false;
+    }
+
+    private wait(ms: number) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+}
+
+const queue = new JobQueue()
+
+// Utility function for delaying execution
+function sleep(milliseconds: number): Promise<void> {
+    return new Promise<void>((resolve) => {
+        setTimeout(resolve, milliseconds)
+    });
+}
 
 export class ChannelPointsController {
 
@@ -15,11 +51,12 @@ export class ChannelPointsController {
         } else if (redeem === 'Lights - Color') {
             const hex = colorToHex(message)
             if (hex) {
-                await Promise.all([
-                    setLightColor(lights.hueGo, hex),
-                    // setLightColor(lights.huePlayLeft, hex),
-                    // setLightColor(lights.huePlayRight, hex)
-                ])
+                queue.enqueue(async () => {
+                    console.log(`Job started - ${hex}`);
+                    setLightColor(lights.hueGo, hex).catch(e => console.error(e))
+                    await sleep(10000) // 10 sec
+                    console.log('Job completed - ${hex}');
+                });
             }
         } else if (redeem === 'Lights - Hex') {
             let hex: string | null = null
@@ -43,11 +80,12 @@ export class ChannelPointsController {
             const color = redeem.split(' - ')[1] ?? '?'
             const hex = colorToHex(color)
             if (hex) {
-                await Promise.all([
-                    setLightColor(lights.hueGo, hex),
-                    // setLightColor(lights.huePlayLeft, hex),
-                    // setLightColor(lights.huePlayRight, hex)
-                ])
+                queue.enqueue(async () => {
+                    console.log(`Job started - ${color}`)
+                    await setLightColor(lights.hueGo, hex)
+                    // await sleep(10000)  // 10 sec
+                    console.log(`Job completed - ${color}`)
+                })
             }
         }
     }
