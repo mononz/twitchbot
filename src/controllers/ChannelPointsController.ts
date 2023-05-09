@@ -19,6 +19,7 @@ class JobQueue {
             const job = this.queue.shift();
             if (job) {
                 await job();
+                await this.wait(10000);
             }
         }
         this.isProcessing = false;
