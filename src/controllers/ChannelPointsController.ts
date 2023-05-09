@@ -3,14 +3,30 @@ import { CameraController } from '@app/controllers/CameraController'
 import { delay } from '@d-fischer/shared-utils'
 
 const colors: Record<string, string> = {
+    // primary
     red: '#FF0000',
-    green: '#00FF00',
-    blue: '#0000FF',
+    yellow: '#FFFF00',
+    blue: '#0033CC',
+    // secondary
+    orange: '#FF9900',
+    green: '#00CC00',
+    purple: '#660099',
+    // other
     teal: '#008080',
+    cyan: '#00FFFF',
     pink: '#FF00FF',
     white: '#FFFFFF',
-    orange: '#FF7F50',
-    yellow: '#DFFF00',
+}
+
+const minimumLightDurationSecs = 10
+let currentColor = colors.teal
+
+function colorToHex(color: string): string | null {
+    return colors[color.toLowerCase()] || null
+}
+
+function waitSec(sec: number) {
+    return new Promise(resolve => setTimeout(resolve, sec * 1000));
 }
 
 class JobQueue {
@@ -37,122 +53,119 @@ class JobQueue {
     }
 }
 
-function waitSec(sec: number) {
-    return new Promise(resolve => setTimeout(resolve, sec * 1000));
-}
-
 const queue = new JobQueue()
 
 export class ChannelPointsController {
 
-    public static async handle(redeem: string, message: string) {
-
+    public async handleRedeem(redeem: string, message: string) {
         if (redeem === 'Dogcam') {
             await CameraController.handleDogCam('!dogcam')
-
-        } else if (redeem === 'Fishcam') {
+            return
+        }
+        if (redeem === 'Fishcam') {
             await CameraController.handleFishCam('!fishcam')
-
-        } else if (redeem === 'bits') {
-            lightsPolice()
-
-        } else if (redeem === 'subscription') {
-            lightsPolice()
-
-        } else if (redeem === 'Lights - Color') {
-            const hex = colorToHex(message)
-            queueItUp('Color', hex)
-        } else if (redeem === 'Lights - Hex') {
-            if (message.startsWith('#') && message.length === 7) {
-                queueItUp('Hex', message)
-            } else {
-                console.error(`Bad hex: ${message}`)
-            }
-        } else if (redeem === 'Lights - Police') {
-            lightsPolice()
-        } else if (redeem === 'Lights - RGB') {
-            lightsRGB()
-        } else if (redeem === 'Lights - Flash') {
-            lightsFlash()
-        }  else if (redeem.startsWith('Lights - ')) {
+            return
+        }
+        if (redeem.startsWith('Lights - ')) {
             const color = redeem.split(' - ')[1] ?? '?'
-            const hex = colorToHex(color)
-            queueItUp(color, hex)
+            this.handleLights(color, message)
         }
     }
-}
 
-const minimumLightDurationSecs = 10
-let currentColor = colors.teal
+    private handleLights(color: string, message: string) {
+        switch (color) {
+            case 'Color':
+                const hex = colorToHex(message)
+                this.queueItUp('Color', hex)
+                break
+            case 'Hex':
+                const regex = new RegExp(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
+                if (regex.test(message)) {
+                    this.queueItUp('Hex', message)
+                } else {
+                    console.error(`Bad hex: ${message}`)
+                }
+                break
+            case 'Police':
+                this.lightsPolice()
+                break
+            case 'RGB':
+                this.lightsRGB()
+                break
+            case 'Flash':
+                this.lightsFlash()
+                break
+            default:
+                console.error(`What is this command? '${color}-${message}`)
+                break
+        }
+    }
 
-function queueItUp(name: string, hex: string | null) {
-    if (hex) {
+    queueItUp(name: string, hex: string | null) {
+        if (hex) {
+            queue.enqueue(async () => {
+                console.log(`Job started - ${name}`)
+                currentColor = hex
+                await setLightColor(lights.hueGo, hex)
+                await waitSec(minimumLightDurationSecs);
+            })
+        }
+    }
+
+    public lightsPolice() {
+        const delay = 500
+        const animation: (string | undefined)[] = [
+            colors.red, colors.blue,
+            colors.red, colors.blue,
+            colors.red, colors.blue,
+            colors.red, colors.blue,
+            colors.red, colors.blue,
+            currentColor  // go back to the previous color set
+        ]
         queue.enqueue(async () => {
-            console.log(`Job started - ${name}`)
-            currentColor = hex
-            await setLightColor(lights.hueGo, hex)
-            await waitSec(minimumLightDurationSecs);
+            console.log('Job started - Police')
+            await this.runLightAnimation(animation, delay)
+        });
+    }
+
+    lightsRGB() {
+        const delay = 500
+        const animation: (string | undefined)[] = [
+            colors.red, colors.green, colors.blue,
+            colors.red, colors.green, colors.blue,
+            colors.red, colors.green, colors.blue,
+            currentColor  // go back to the previous color set
+        ]
+        queue.enqueue(async () => {
+            console.log('Job started - RGB')
+            await this.runLightAnimation(animation, delay)
         })
     }
-}
 
-function lightsPolice() {
-    const delay = 500
-    const animation: (string | undefined)[] = [
-        colors.red, colors.blue,
-        colors.red, colors.blue,
-        colors.red, colors.blue,
-        colors.red, colors.blue,
-        colors.red, colors.blue,
-        currentColor  // go back to the previous color set
-    ]
-    queue.enqueue(async () => {
-        console.log('Job started - Police')
-        await runLightAnimation(animation, delay)
-    });
-}
+    lightsFlash() {
+        const delay = 500
+        const black = '#000000' // black turns off light
+        const animation: (string | undefined)[] = [
+            black, colors.white,
+            black, colors.white,
+            black, colors.white,
+            black, colors.white,
+            currentColor  // go back to the previous color set
+        ]
+        queue.enqueue(async () => {
+            console.log('Job started - RGB')
+            await this.runLightAnimation(animation, delay)
+        })
+    }
 
-function lightsRGB() {
-    const delay = 500
-    const animation: (string | undefined)[] = [
-        colors.red, colors.green, colors.blue,
-        colors.red, colors.green, colors.blue,
-        colors.red, colors.green, colors.blue,
-        currentColor  // go back to the previous color set
-    ]
-    queue.enqueue(async () => {
-        console.log('Job started - RGB')
-        await runLightAnimation(animation, delay)
-    })
-}
-
-function lightsFlash() {
-    const delay = 500
-    const black = '#000000' // black turns off light
-    const animation: (string | undefined)[] = [
-        black, colors.white,
-        black, colors.white,
-        black, colors.white,
-        black, colors.white,
-        currentColor  // go back to the previous color set
-    ]
-    queue.enqueue(async () => {
-        console.log('Job started - RGB')
-        await runLightAnimation(animation, delay)
-    })
-}
-
-async function runLightAnimation(animation: (string | undefined)[], delayMs: number | null = null) {
-    const sequence = animation.filter((x): x is string => x !== null)
-    console.log(sequence)
-    for (const color of sequence) {
-        setLightColor(lights.hueGo, color).catch(e => console.error(e))
-        if (delayMs) {
-            await delay(delayMs)
+    async runLightAnimation(animation: (string | undefined)[], delayMs: number | null = null) {
+        const sequence = animation.filter((x): x is string => x !== null)
+        console.log(sequence)
+        for (const color of sequence) {
+            setLightColor(lights.hueGo, color).catch(e => console.error(e))
+            if (delayMs) {
+                await delay(delayMs)
+            }
         }
     }
-}
-
-function colorToHex(color: string): string | null {
-    return colors[color.toLowerCase()] || null
 }

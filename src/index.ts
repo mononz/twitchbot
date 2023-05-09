@@ -1,6 +1,6 @@
 import { logger } from './logger'
-import { twitchChatClient, twitchPubSubClient, getTwitchUserId } from './twitch-client'
-import { getLightInfo, lights } from './hue-client'
+import { twitchChatClient, twitchPubSubClient, getTwitchUserId, twitchSay } from './twitch-client'
+import { getLightInfo } from './hue-client'
 import { TaskController } from './controllers/TaskController'
 import { ChannelPointsController } from './controllers/ChannelPointsController'
 import { PubSubBitsMessage, PubSubRedemptionMessage, PubSubSubscriptionMessage } from '@twurple/pubsub';
@@ -12,7 +12,8 @@ async function startTwitch() {
 
     const username = env.TWITCH_USERNAME
     const twitchUserId = await getTwitchUserId(username)
-    const channel = `#${username}`
+
+    const controller = new ChannelPointsController()
 
     twitchChatClient.connect()
         .then(() => console.log(`Twitch clients connected for - ${twitchUserId}`))
@@ -23,15 +24,21 @@ async function startTwitch() {
     })
 
     twitchPubSubClient.onSubscription(twitchUserId, (message: PubSubSubscriptionMessage) => {
-        handleSubscription().catch(e => console.error(e))
+        twitchSay(`What the deuce! Thanks for the the sub @${message.userName}!`)
+        controller.lightsPolice()
     })
 
     twitchPubSubClient.onBits(twitchUserId, (message: PubSubBitsMessage) => {
-        handleBitsRedeem().catch(e => console.error(e))
+        const user = message.userName
+        twitchSay(`You're a bit of a legend ${user ? `@${user}` : ''}}, Thanks!`)
+        controller.lightsPolice()
     })
 
     twitchPubSubClient.onRedemption(twitchUserId, (message: PubSubRedemptionMessage) => {
-        handleTwitchRedeem(message).catch(e => console.error(e))
+        if (message.rewardTitle) {
+            console.log('Redeem:', `${message.userName ?? '?'} is redeeming ${message.rewardTitle}`)
+            controller.handleRedeem(message.rewardTitle, message.message).catch(e => console.error(e))
+        }
     })
 
     console.log('Twitch PubSub client connected')
@@ -47,21 +54,6 @@ async function handleTwitchMessage(channel: string, user: string, message: strin
     if (user === 'thedevdadbot') return  // todo, ignore bot messages
 
     await TaskController.handle(message, user)
-}
-
-async function handleTwitchRedeem(message: PubSubRedemptionMessage) {
-    if (message.rewardTitle) {
-        console.log('Redeem:', `${message.userName ?? '?'} is redeeming ${message.rewardTitle}`)
-        await ChannelPointsController.handle(message.rewardTitle, message.message)
-    }
-}
-
-async function handleBitsRedeem() {
-    await ChannelPointsController.handle('bits', '')
-}
-
-async function handleSubscription() {
-    await ChannelPointsController.handle('subscription', '')
 }
 
 console.log('twitch bot starting')

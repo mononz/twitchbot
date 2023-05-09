@@ -4,7 +4,6 @@ import { env } from '@app/env';
 import * as path from 'path';
 import { SpecsController } from '@app/controllers/SpecsController';
 import { RiddleController } from '@app/controllers/RiddleController';
-import { CameraController } from '@app/controllers/CameraController';
 
 export class TaskController {
 
@@ -31,22 +30,12 @@ export class TaskController {
 
         const specsCommand = '!specs'
         const riddleCommand = '!riddle'
-        const dogcamCommand = '!fishcam'
-        const fishcamCommand = '!dogcam'
 
-        commandList.push(dogcamCommand)
-        commandList.push(fishcamCommand)
         commandList.push(specsCommand)
         commandList.push(riddleCommand)
 
         if (msg === '!commands') {
             twitchSay(`Command List -> ${commandList.join(', ')}`);
-
-        } else if (msg === dogcamCommand) {
-            await CameraController.handleDogCam(msg)
-
-        } else if (msg === fishcamCommand) {
-            await CameraController.handleFishCam(msg)
 
         } else if (msg === riddleCommand) {
             RiddleController.handleRiddleRequest()
@@ -58,7 +47,7 @@ export class TaskController {
 
         } else if (msg === specsCommand) {
             const specs = await SpecsController.generateSpecsResponse()
-            twitchSay(specs);
+            twitchSay(specs)
 
         } else if (isModerator && msgSplits.length >= 3 && msgSplits[0] === '!add' && msgSplits[1]?.startsWith('!')) {
             // i.e. !add !hacker some text
@@ -82,8 +71,6 @@ export class TaskController {
                 console.error(`Unexpected error opening ${fileName}`)
             }
 
-        } else if (msg.startsWith('!')) {
-            twitchSay('I don\'t know this command');
         }
     }
 }
