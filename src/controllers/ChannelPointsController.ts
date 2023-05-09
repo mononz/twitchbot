@@ -96,7 +96,12 @@ export class ChannelPointsController {
                 this.lightsFlash()
                 break
             default:
-                console.error(`What is this command? '${color}-${message}`)
+                const hexFallback = colorToHex(color)
+                if (hexFallback) {
+                    this.queueItUp('Color', hexFallback)
+                } else {
+                    console.error(`What is this command? '${color}-${message}`)
+                }
                 break
         }
     }

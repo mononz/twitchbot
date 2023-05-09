@@ -1,10 +1,13 @@
 import { logger } from './logger'
-import { twitchChatClient, twitchPubSubClient, getTwitchUserId, twitchSay } from './twitch-client'
+import { twitchChatClient, getTwitchUserId, twitchSay, twitchWsClient } from './twitch-client';
 import { getLightInfo } from './hue-client'
 import { TaskController } from './controllers/TaskController'
 import { ChannelPointsController } from './controllers/ChannelPointsController'
-import { PubSubBitsMessage, PubSubRedemptionMessage, PubSubSubscriptionMessage } from '@twurple/pubsub';
 import { env } from '@app/env';
+import type { EventSubChannelFollowEvent } from '@twurple/eventsub-base';
+import type { EventSubChannelRedemptionAddEvent, EventSubChannelSubscriptionEvent } from '@twurple/eventsub-base';
+import type { EventSubExtensionBitsTransactionCreateEvent} from '@twurple/eventsub-base/lib/events/EventSubExtensionBitsTransactionCreateEvent';
+import { EventSubChannelCheerEvent } from '@twurple/eventsub-base';
 
 startTwitch().catch(e => console.error(e))
 
@@ -23,23 +26,30 @@ async function startTwitch() {
         handleTwitchMessage(channel, user, message).catch(e => console.error(e))
     })
 
-    twitchPubSubClient.onSubscription(twitchUserId, (message: PubSubSubscriptionMessage) => {
-        twitchSay(`What the deuce! Thanks for the the sub @${message.userName}!`)
-        controller.lightsPolice()
+    twitchWsClient.onChannelSubscription(twitchUserId, (event: EventSubChannelSubscriptionEvent) => {
+        twitchSay(`What the deuce! Thanks for the the sub @${event.userDisplayName}! mononzShipit`)
+        controller.lightsFlash()
     })
 
-    twitchPubSubClient.onBits(twitchUserId, (message: PubSubBitsMessage) => {
-        const user = message.userName
-        twitchSay(`You're a bit of a legend ${user ? `@${user}` : ''}}, Thanks!`)
-        controller.lightsPolice()
+    twitchWsClient.onChannelFollow(twitchUserId, twitchUserId, (event: EventSubChannelFollowEvent) => {
+        twitchSay(`Ayyyy, thanks for the follow ${event.userDisplayName}`)
+        controller.lightsFlash()
     })
 
-    twitchPubSubClient.onRedemption(twitchUserId, (message: PubSubRedemptionMessage) => {
-        if (message.rewardTitle) {
-            console.log('Redeem:', `${message.userName ?? '?'} is redeeming ${message.rewardTitle}`)
-            controller.handleRedeem(message.rewardTitle, message.message).catch(e => console.error(e))
+    twitchWsClient.onChannelCheer(twitchUserId, (event: EventSubChannelCheerEvent) => {
+        const user = event.userDisplayName
+        twitchSay(`You're a bit of a legend ${user ? `@${user}` : 'anon'}, Thanks!`)
+        controller.lightsFlash()
+    })
+
+    twitchWsClient.onChannelRedemptionAdd(twitchUserId, (event: EventSubChannelRedemptionAddEvent) => {
+        if (event.rewardTitle) {
+            console.log('Redeem:', `${event.userName ?? '?'} is redeeming ${event.rewardTitle}`)
+            controller.handleRedeem(event.rewardTitle, event.input).catch(e => console.error(e))
         }
     })
+
+    twitchWsClient.start()
 
     console.log('Twitch PubSub client connected')
 
