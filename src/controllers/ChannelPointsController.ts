@@ -4,16 +4,15 @@ import { delay } from '@d-fischer/shared-utils';
 
 export class ChannelPointsController {
 
-    public static async handle(rewardTitle: string, message: string) {
-        const title = rewardTitle.toLowerCase()
+    public static async handle(redeem: string, message: string) {
 
-        if (title === 'dogcam') {
+        if (redeem === 'Dogcam') {
             await CameraController.handleDogCam('!dogcam')
 
-        } else if (title === 'fishcam') {
+        } else if (redeem === 'Fishcam') {
             await CameraController.handleFishCam('!fishcam')
 
-        } else if (title === 'lights - color') {
+        } else if (redeem === 'Lights - Color') {
             const hex = colorToHex(message)
             if (hex) {
                 await Promise.all([
@@ -22,7 +21,7 @@ export class ChannelPointsController {
                     // setLightColor(lights.huePlayRight, hex)
                 ])
             }
-        } else if (title === 'lights - hex') {
+        } else if (redeem === 'Lights - Hex') {
             let hex: string | null = null
             if (message.startsWith('#') && message.length === 7) {
                 hex = message
@@ -36,12 +35,12 @@ export class ChannelPointsController {
                     // setLightColor(lights.huePlayRight, hex)
                 ])
             }
-        } else if (title === 'lights - police') {
+        } else if (redeem === 'Lights - Police') {
             await lightsPolice()
-        } else if (title === 'lights - rgb') {
+        } else if (redeem === 'Lights - RGB') {
             await lightsRGB()
-        } else if (title.startsWith('lights - ')) {
-            const color = title.split(' - ')[1] ?? '?'
+        } else if (redeem.startsWith('Lights - ')) {
+            const color = redeem.split(' - ')[1] ?? '?'
             const hex = colorToHex(color)
             if (hex) {
                 await Promise.all([
@@ -55,35 +54,34 @@ export class ChannelPointsController {
 }
 
 async function lightsPolice() {
-    const red = '#FF0000'
-    const blue = '#0000FF'
-    const animation: string[] = [
-        red, blue,
-        red, blue,
-        red, blue,
-        red, blue,
-        red, blue
+    const delay = 500
+    const animation: (string | undefined)[] = [
+        colors.red, colors.blue,
+        colors.red, colors.blue,
+        colors.red, colors.blue,
+        colors.red, colors.blue,
+        colors.red, colors.blue
     ]
-    await runLightAnimation(animation)
+    await runLightAnimation(animation, delay)
     await resetLights()
 }
 
 async function lightsRGB() {
-    const red = '#FF0000'
-    const green = '#00FF00'
-    const blue = '#0000FF'
-    const animation: string[] = [
-        red, blue, green,
-        red, blue, green,
-        red, blue, green
+    const delay = 500
+    const animation: (string | undefined)[] = [
+        colors.red, colors.green, colors.blue,
+        colors.red, colors.green, colors.blue,
+        colors.red, colors.green, colors.blue,
     ]
-    await runLightAnimation(animation, 100)
+    await runLightAnimation(animation, delay)
     await resetLights()
 }
 
-async function runLightAnimation(animation: string[], delayMs: number | null = null) {
-    for (const color of animation) {
-        await setLightColor(lights.hueGo, color)
+async function runLightAnimation(animation: (string | undefined)[], delayMs: number | null = null) {
+    const sequence = animation.filter((x): x is string => x !== null)
+    console.log(sequence)
+    for (const color of sequence) {
+        setLightColor(lights.hueGo, color).catch(e => console.error(e))
         if (delayMs) {
             await delay(delayMs)
         }
@@ -95,25 +93,17 @@ async function resetLights() {
     await setLightColor(lights.hueGo, color)
 }
 
+const colors: Record<string, string> = {
+    red: '#FF0000',
+    green: '#00FF00',
+    blue: '#0000FF',
+    teal: '#008080',
+    pink: '#FF00FF',
+    white: '#FFFFFF',
+    orange: '#FF7F50',
+    yellow: '#DFFF00',
+}
+
 function colorToHex(color: string): string | null {
-    switch (color.toLowerCase()) {
-        case 'red':
-            return '#FF0000'
-        case 'green':
-            return '#00FF00'
-        case 'blue':
-            return '#0000FF'
-        case 'teal':
-            return '#008080'
-        case 'pink':
-            return '#FF00FF'
-        case 'white':
-            return '#FFFFFF'
-        case 'orange':
-            return '#FF7F50'
-        case 'yellow':
-            return '#DFFF00'
-        default:
-            return null
-    }
+    return colors[color.toLowerCase()] || null
 }

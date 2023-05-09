@@ -19,7 +19,8 @@ export async function setLightColor(lightId: number, hex: string): Promise<void>
     const lightState = new v3.lightStates.LightState()
         .on(true)
         .rgb(rgb.r, rgb.g, rgb.b)
-        .brightness(100);
+        .transitionFast()
+        .brightness(100)
 
     const api = await getHueApi();
     await api.lights.setLightState(lightId, lightState)
@@ -32,13 +33,13 @@ export async function getLightInfo(): Promise<void> {
     const api = await getHueApi();
 
     const hueGo= await api.lights.getLightState(lights.hueGo)
-    console.log('Light hueGo: ', hueGo);
+    console.log(`Light hueGo => ${hueGo.toString()}`);
 
     const huePlayLeft= await api.lights.getLightState(lights.huePlayLeft)
-    console.log('Light huePlayLeft: ', huePlayLeft);
+    console.log(`Light huePlayLeft => ${huePlayLeft.toString()}`);
 
     const huePlayRight= await api.lights.getLightState(lights.huePlayRight)
-    console.log('Light huePlayRight: ', huePlayRight);
+    console.log(`Light huePlayRight => ${huePlayRight.toString()}`);
 }
 
 function hexToRgb(hex: string): { r: number; g: number; b: number } {
