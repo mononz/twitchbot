@@ -1,29 +1,16 @@
-import { lights, setLightColor } from './../hue-client'
+import type { HueColor} from './../hue-client';
+import { setGroupColor, hueGroups,
+    hueDefault,
+    hueColor,
+    getColorByName,
+    hueAnimations,
+    setLightColor, hueLights,
+} from './../hue-client';
 import { CameraController } from '@app/controllers/CameraController'
 import { delay } from '@d-fischer/shared-utils'
 
-const colors: Record<string, string> = {
-    // primary
-    red: '#FF0000',
-    yellow: '#FFFF00',
-    blue: '#0033CC',
-    // secondary
-    orange: '#FF9900',
-    green: '#00CC00',
-    purple: '#660099',
-    // other
-    teal: '#008080',
-    cyan: '#00FFFF',
-    pink: '#FF00FF',
-    white: '#FFFFFF',
-}
-
-const minimumLightDurationSecs = 10
-let currentColor = colors.teal
-
-function colorToHex(color: string): string | null {
-    return colors[color.toLowerCase()] || null
-}
+const minimumLightDurationSecs = 2
+let currentColor = hueDefault
 
 function waitSec(sec: number) {
     return new Promise(resolve => setTimeout(resolve, sec * 1000));
@@ -57,7 +44,7 @@ const queue = new JobQueue()
 
 export class ChannelPointsController {
 
-    public async handleRedeem(redeem: string, message: string) {
+    public async handleRedeem(redeem: string) {
         if (redeem === 'Dogcam') {
             await CameraController.handleDogCam('!dogcam')
             return
@@ -68,109 +55,65 @@ export class ChannelPointsController {
         }
         if (redeem.startsWith('Lights - ')) {
             const color = redeem.split(' - ')[1] ?? '?'
-            this.handleLights(color, message)
+            this.handleLights(color)
         }
     }
 
-    private handleLights(color: string, message: string) {
-        switch (color) {
-            case 'Color':
-                const hex = colorToHex(message)
-                this.queueItUp('Color', hex)
-                break
-            case 'Hex':
-                const regex = new RegExp(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/)
-                if (regex.test(message)) {
-                    this.queueItUp('Hex', message)
-                } else {
-                    console.error(`Bad hex: ${message}`)
-                }
-                break
+    private handleLights(name: string) {
+        switch (name) {
             case 'Police':
-                this.lightsPolice()
+                this.queueAnimation(hueAnimations.police, 800)
                 break
             case 'RGB':
-                this.lightsRGB()
+                this.queueAnimation(hueAnimations.rgb, 800)
                 break
             case 'Flash':
-                this.lightsFlash()
+                this.queueAnimation(hueAnimations.flash, 800)
                 break
             default:
-                const hexFallback = colorToHex(color)
-                if (hexFallback) {
-                    this.queueItUp('Color', hexFallback)
+                const color = getColorByName(name)
+                if (color) {
+                    this.queueColor('Color', color)
                 } else {
-                    console.error(`What is this command? '${color}-${message}`)
+                    console.error(`I don't know the color -> ${name}`)
                 }
                 break
         }
     }
 
-    queueItUp(name: string, hex: string | null) {
-        if (hex) {
+    queueColor(name: string, color: HueColor | null) {
+        if (color) {
             queue.enqueue(async () => {
                 console.log(`Job started - ${name}`)
-                currentColor = hex
-                await setLightColor(lights.hueGo, hex)
+                currentColor = color
+                await setGroupColor(hueGroups.background, color, true).catch(e => console.error(e))
                 await waitSec(minimumLightDurationSecs);
             })
         }
     }
 
-    public lightsPolice() {
-        const delay = 500
-        const animation: (string | undefined)[] = [
-            colors.red, colors.blue,
-            colors.red, colors.blue,
-            colors.red, colors.blue,
-            colors.red, colors.blue,
-            colors.red, colors.blue,
-            currentColor  // go back to the previous color set
-        ]
+    queueAnimation(animation: (HueColor)[], delay: number) {
         queue.enqueue(async () => {
             console.log('Job started - Police')
             await this.runLightAnimation(animation, delay)
         });
     }
 
-    lightsRGB() {
-        const delay = 500
-        const animation: (string | undefined)[] = [
-            colors.red, colors.green, colors.blue,
-            colors.red, colors.green, colors.blue,
-            colors.red, colors.green, colors.blue,
-            currentColor  // go back to the previous color set
-        ]
-        queue.enqueue(async () => {
-            console.log('Job started - RGB')
-            await this.runLightAnimation(animation, delay)
-        })
-    }
+    async runLightAnimation(animation: (HueColor)[], delayMs: number | null = null) {
+        console.log(animation)
 
-    lightsFlash() {
-        const delay = 500
-        const black = '#000000' // black turns off light
-        const animation: (string | undefined)[] = [
-            black, colors.white,
-            black, colors.white,
-            black, colors.white,
-            black, colors.white,
-            currentColor  // go back to the previous color set
-        ]
-        queue.enqueue(async () => {
-            console.log('Job started - RGB')
-            await this.runLightAnimation(animation, delay)
-        })
-    }
+        setLightColor(hueLights.huePlayLeft, currentColor, false).catch(e => console.error(e))
 
-    async runLightAnimation(animation: (string | undefined)[], delayMs: number | null = null) {
-        const sequence = animation.filter((x): x is string => x !== null)
-        console.log(sequence)
-        for (const color of sequence) {
-            setLightColor(lights.hueGo, color).catch(e => console.error(e))
+        for (const color of animation) {
+            if (color === hueColor.off) {
+                setLightColor(hueLights.huePlayRight, color, false).catch(e => console.error(e))
+            } else {
+                setLightColor(hueLights.huePlayRight, color, true).catch(e => console.error(e))
+            }
             if (delayMs) {
                 await delay(delayMs)
             }
         }
+        await setGroupColor(hueGroups.background, currentColor, true).catch(e => console.error(e))
     }
 }

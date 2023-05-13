@@ -45,7 +45,7 @@ async function startTwitch() {
     twitchWsClient.onChannelRedemptionAdd(twitchUserId, (event: EventSubChannelRedemptionAddEvent) => {
         if (event.rewardTitle) {
             console.log('Redeem:', `${event.userName ?? '?'} is redeeming ${event.rewardTitle}`)
-            controller.handleRedeem(event.rewardTitle, event.input).catch(e => console.error(e))
+            controller.handleRedeem(event.rewardTitle).catch(e => console.error(e))
         }
     })
 
