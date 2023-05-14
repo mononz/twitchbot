@@ -1,13 +1,8 @@
 import type { HueColor} from './../hue-client';
-import { setGroupColor, hueGroups,
-    hueDefault,
-    hueColor,
-    getColorByName,
-    hueAnimations,
-    setLightColor, hueLights,
-} from './../hue-client';
+import { setGroupColor, hueGroups, hueDefault, hueColor, getColorByName, hueAnimations, setLightColor, hueLights } from './../hue-client';
 import { CameraController } from '@app/controllers/CameraController'
 import { delay } from '@d-fischer/shared-utils'
+import { EventSubChannelRedemptionAddEvent } from '@twurple/eventsub-base';
 
 const minimumLightDurationSecs = 2
 let currentColor = hueDefault
@@ -44,44 +39,41 @@ const queue = new JobQueue()
 
 export class ChannelPointsController {
 
-    public async handleRedeem(redeem: string) {
+    public async handleRedeem(redeem: string): Promise<boolean> {
         if (redeem === 'Dogcam') {
             await CameraController.handleDogCam('!dogcam')
-            return
-        }
-        if (redeem === 'Fishcam') {
+            return true
+        } else if (redeem === 'Fishcam') {
             await CameraController.handleFishCam('!fishcam')
-            return
-        }
-        if (redeem.startsWith('Lights - ')) {
+            return true
+        } else if (redeem.startsWith('Lights - ')) {
             const color = redeem.split(' - ')[1] ?? '?'
-            this.handleLights(color)
+            return this.handleLights(color)
+        } else {
+            return false
         }
     }
 
-    private handleLights(name: string) {
+    private handleLights(name: string): boolean {
         switch (name) {
             case 'Police':
-                this.queueAnimation(hueAnimations.police, 800)
-                break
+                return this.queueAnimation(hueAnimations.police, 800)
             case 'RGB':
-                this.queueAnimation(hueAnimations.rgb, 800)
-                break
+                return this.queueAnimation(hueAnimations.rgb, 800)
             case 'Flash':
-                this.queueAnimation(hueAnimations.flash, 800)
-                break
+                return this.queueAnimation(hueAnimations.flash, 800)
             default:
                 const color = getColorByName(name)
                 if (color) {
-                    this.queueColor('Color', color)
+                    return this.queueColor('Color', color)
                 } else {
                     console.error(`I don't know the color -> ${name}`)
+                    return false
                 }
-                break
         }
     }
 
-    queueColor(name: string, color: HueColor | null) {
+    queueColor(name: string, color: HueColor | null): boolean {
         if (color) {
             queue.enqueue(async () => {
                 console.log(`Job started - ${name}`)
@@ -89,14 +81,18 @@ export class ChannelPointsController {
                 await setGroupColor(hueGroups.background, color, true).catch(e => console.error(e))
                 await waitSec(minimumLightDurationSecs);
             })
+            return true
+        } else {
+            return false
         }
     }
 
-    queueAnimation(animation: (HueColor)[], delay: number) {
+    queueAnimation(animation: (HueColor)[], delay: number): boolean {
         queue.enqueue(async () => {
             console.log('Job started - Police')
             await this.runLightAnimation(animation, delay)
         });
+        return true
     }
 
     async runLightAnimation(animation: (HueColor)[], delayMs: number | null = null) {

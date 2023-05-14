@@ -1,7 +1,7 @@
 import { env } from '@app/env';
 import { ChatClient } from '@twurple/chat';
 import { StaticAuthProvider } from '@twurple/auth';
-import { ApiClient } from '@twurple/api';
+import { ApiClient, HelixCustomRewardRedemption } from '@twurple/api';
 import { EventSubWsListener  } from '@twurple/eventsub-ws';
 
 const authProvider = new StaticAuthProvider(env.TWITCH_CLIENT_ID, env.TWITCH_ACCESS_TOKEN)

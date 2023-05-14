@@ -25,7 +25,7 @@ This repo is a fork of https://github.com/beerent/thedevdadbot
    - Copy the client id from the twitch developer application to your .env file to 'TWITCH_CLIENT_ID'
 3. Open the website https://twitchapps.com/tokengen/
    - Paste in your client id
-   - in scopes, paste in `chat:edit channel:read:redemptions channel:read:vips chat:read channel:read:subscriptions bits:read moderator:read:followers`
+   - in scopes, paste in `chat:edit channel:read:redemptions channel:manage:redemptions channel:read:vips chat:read channel:read:subscriptions bits:read moderator:read:followers`
    - Press connect, and approve the twitch oauth flow
    - Copy the access token and put it into your .env at 'TWITCH_ACCESS_TOKEN'
 
