@@ -3,8 +3,8 @@ import { SceneController } from '@app/controllers/SceneController';
 import { setTimeout } from 'timers/promises';
 import { twitchSay } from '@app/twitch-client';
 
-const riddle = 'You can see me in water, but I never get wet. What am I?';
-const answers = ['reflection'];
+const riddle = '0 is false and 1 is true, right?';
+const answers = ['1'];
 
 export class RiddleController {
 

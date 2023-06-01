@@ -25,6 +25,8 @@ export const schema = z.object({
     TWITCH_CLIENT_ID: z.string(),
     TWITCH_ACCESS_TOKEN: z.string(),
     TWITCH_CHANNELS: z.array(z.string()),
+    HUE_BRIDGE_IP: z.string(),
+    HUE_USERNAME: z.string()
 });
 
 /**
@@ -37,6 +39,8 @@ export const serverEnv = {
     TWITCH_CLIENT_ID: process.env.TWITCH_CLIENT_ID,
     TWITCH_ACCESS_TOKEN: process.env.TWITCH_ACCESS_TOKEN,
     TWITCH_CHANNELS: process.env.TWITCH_CHANNELS?.split(',').map((channel) => channel.trim()),
+    HUE_BRIDGE_IP: process.env.HUE_BRIDGE_IP,
+    HUE_USERNAME: process.env.HUE_USERNAME,
 } satisfies Record<keyof z.infer<typeof schema>, z.infer<typeof schema>[keyof z.infer<typeof schema>] | undefined>;
 
 const _Env = schema.safeParse(serverEnv);
