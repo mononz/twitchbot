@@ -81,13 +81,13 @@ function getHueApi(): Promise<Api> {
         .connect(env.HUE_USERNAME)
 }
 
-export async function setLightColor(lightId: number, color: HueColor, on: boolean): Promise<void> {
+export async function setLightColor(lightId: number, color: HueColor, on: boolean, brightness = 100): Promise<void> {
     const lightState = new v3.lightStates.LightState()
         .on(on)
         .hue(color.hue)
         .sat(color.sat)
         .transitionFast()
-        .brightness(color === hueColor.off ? 0 : 100)
+        .brightness(color === hueColor.off ? 0 : brightness)
 
     const api = await getHueApi();
     await api.lights.setLightState(lightId, lightState)
@@ -140,5 +140,5 @@ export async function getLightInfo(): Promise<void> {
     console.log('Light huePlayRight', huePlayRight)
 
     // const groups = await api.groups.getGroup(hueGroups.background)
-    // console.log('Light groups =>', groups);
+    // console.log('Light groups =>', groups)
 }

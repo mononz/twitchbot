@@ -1,6 +1,6 @@
 import { logger } from './logger'
 import { twitchChatClient, getTwitchUserId, twitchSay, twitchWsClient } from './twitch-client';
-import { getLightInfo, hueAnimations } from './hue-client';
+import { getLightInfo, hueAnimations, hueColor, hueLights, setLightColor } from './hue-client';
 import { TaskController } from './controllers/TaskController'
 import { ChannelPointsController } from './controllers/ChannelPointsController'
 import { env } from '@app/env';
@@ -64,6 +64,9 @@ async function startTwitch() {
     console.log('Twitch PubSub client connected')
 
     await getLightInfo()
+    await setLightColor(hueLights.hueGo, hueColor.white, true, 40)
+    await setLightColor(hueLights.huePlayLeft, hueColor.blue, true, 100)
+    await setLightColor(hueLights.huePlayRight, hueColor.blue, true, 100)
 }
 
 async function handleTwitchMessage(channel: string, user: string, message: string) {
